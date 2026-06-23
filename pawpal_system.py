@@ -33,7 +33,7 @@ class Task:
     name: str
     category: str
     duration_minutes: int
-    priority: int
+    priority: str  # "low", "medium", or "high"
     frequency: str
     preferred_time_of_day: str
     completed: bool = False
@@ -58,12 +58,12 @@ class Task:
         return True
 
     def get_priority_value(self) -> int:
-        """Returns the numeric priority of this task, used for sorting when building a schedule."""
-        return self.priority
+        """Returns a numeric value for priority, used for sorting (low=3, medium=2, high=1)."""
+        return {"high": 1, "medium": 2, "low": 3}.get(self.priority.lower(), 2)
 
     def get_display_label(self) -> str:
         """Returns a label for the task, combining name, category, and duration."""
-        return f"{self.name} [{self.category}] — {self.duration_minutes} min"
+        return f"{self.name} [{self.category}] — {self.duration_minutes} min [priority: {self.priority}]"
 
 
 class Owner:
@@ -136,8 +136,11 @@ class Schedule:
         if not self.slots:
             return "No tasks scheduled."
         lines = [f"Schedule for {self.pet.name} on {self.date} (Owner: {self.owner.name}):"]
-        for start_time, task in self.slots:
-            lines.append(f"  +{start_time:>3} min — {task.get_display_label()}")
+        base_hour, base_minute = 8, 0
+        for offset_minutes, task in self.slots:
+            total = base_hour * 60 + base_minute + offset_minutes
+            h, m = divmod(total, 60)
+            lines.append(f"  {h:02d}:{m:02d} — {task.get_display_label()}")
         lines.append(f"Total time used: {self.total_minutes_used} min")
         return "\n".join(lines)
 
