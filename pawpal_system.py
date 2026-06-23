@@ -50,6 +50,7 @@ class Owner:
         self.name = name
         self.available_minutes_per_day = available_minutes_per_day
         self.preferences = preferences
+        self.tasks: List = []
 
     def add_task(self, task):
         """Adds a Task to the owner's managed task list."""

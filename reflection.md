@@ -4,12 +4,19 @@
 
 **a. Initial design**
 
-My app needs to do three main things: let a user add a pet along with some basic owner information, let the user create and edit care tasks for that pet (each task has a duration and a priority level), and then generate a daily plan that organizes those tasks in a useful order. I started by thinking about what data the app has to keep track of — who the pet is, what needs to be done for it, and how to turn that list of tasks into a schedule for the day. Before thinking about classes or methods, I just wanted to make sure these three actions felt complete enough to build around. That gave me a rough sense of what pieces the app would need.
+I ended up with four classes: `Pet`, `Task`, `Owner`, and `Schedule`. Each one handles a pretty distinct piece of the problem.
+
+`Pet` is just a profile, it holds the animal's name, species, breed, age, and any special needs. Its two methods (`get_care_profile` and `has_special_needs`) exist mostly so other parts of the system can ask questions about the pet without digging into its raw fields. I wanted Pet to be passive; it doesn't do anything on its own, it just describes the animal.
+
+`Task` represents a single care item, like feeding or grooming. It carries the information I need to schedule it, how long it takes, how urgent it is, how often it happens, and what time of day works best. The `is_due_today` method felt necessary early on because not every task runs every day, so the scheduler needs a way to filter before it even starts building the plan. `get_priority_value` and `get_display_label` are utility methods that keep the scheduling and display logic from leaking into Task's data.
+
+`Owner` will stores how much time the owner has available each day and their preferences, and it acts as the container for the task list. Tasks are managed through the owner rather than floating loose. That felt right because in real life, the owner is the one deciding what needs to get done.
+
+`Schedule` is where the actual planning happens. It takes a specific date, owner, and pet, then figures out which tasks fit into the day's time budget and in what order. The separation of `fits_in_budget`, `add_slot`, and `generate` felt important. I didn't want generate to be one giant method that did everything at once. Breaking it up made the logic easier to reason about step by step.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+Yes, one thing caught me when reviewing the skeleton more carefully. The `Owner` class had methods for `add_task`, `remove_task`, and `get_tasks`, but `__init__` never actually initialized a `tasks` list. Every one of those methods would have crashed immediately at runtime because there was nothing to add to or read from. I added `self.tasks: List = []` to the constructor to fix that.
 
 ---
 
