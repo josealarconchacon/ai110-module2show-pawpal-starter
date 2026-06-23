@@ -2,6 +2,12 @@
 
 ## 1. System Design
 
+PawPal+ is built around three core user actions:
+
+1. **Register a pet** — the owner creates a pet profile, capturing the animal's name, species, breed, age, and any special care needs.
+2. **Assign care tasks** — the owner adds tasks (feeding, grooming, medication, etc.) to their task list, each described by its duration, priority, frequency, and preferred time of day.
+3. **Generate a daily schedule** — the system takes the owner's available time and the pet's tasks, filters to what is due today, and produces an ordered plan that fits within the time budget.
+
 **a. Initial design**
 
 I ended up with four classes: `Pet`, `Task`, `Owner`, and `Schedule`. Each one handles a pretty distinct piece of the problem.
@@ -12,13 +18,15 @@ I ended up with four classes: `Pet`, `Task`, `Owner`, and `Schedule`. Each one h
 
 `Owner` will stores how much time the owner has available each day and their preferences, and it acts as the container for the task list. Tasks are managed through the owner rather than floating loose. That felt right because in real life, the owner is the one deciding what needs to get done.
 
-`Schedule` is where the actual planning happens. It takes a specific date, owner, and pet, then figures out which tasks fit into the day's time budget and in what order. The separation of `fits_in_budget`, `add_slot`, and `generate` felt important. I didn't want generate to be one giant method that did everything at once. Breaking it up made the logic easier to reason about step by step.
+`Schedule` is where the actual planning happens. It takes a specific date, owner, and pet, then figures out which tasks fit into the day's time budget and in what order. The separation of `fits_in_budget`, `add_slot`, and `generate` felt important.
 
 **b. Design changes**
 
 Yes, one thing caught me when reviewing the skeleton more carefully. The `Owner` class had methods for `add_task`, `remove_task`, and `get_tasks`, but `__init__` never actually initialized a `tasks` list. Every one of those methods would have crashed immediately at runtime because there was nothing to add to or read from. I added `self.tasks: List = []` to the constructor to fix that.
 
 The brief calls this component `Scheduler,` but I went with Schedule instead. The class holds a single day's plan for one owner and pet (`slots, totals used, skipped tasks`), so it felt more like a thing than a doer, and Schedule matched that better.
+
+I also missed completion tracking in my original Task design. The project brief requires that tasks can be marked done, and Phase 2 Step 3 specifically tests `mark_complete()`, but I hadn't included either the `completed` field or that method in my initial class. Once I noticed the gap I added `completed: bool = False` as a default field and a `mark_complete()` method that flips it to `True`. It's a small addition but without it the scheduler has no way to record that a task actually happened, only that it was planned.
 
 ---
 
