@@ -3,6 +3,7 @@ classDiagram
         +String name
         +int available_minutes_per_day
         +dict preferences
+        +List~Task~ tasks
         +add_task(task)
         +remove_task(task)
         +get_tasks() List
@@ -26,6 +27,8 @@ classDiagram
         +int priority
         +String frequency
         +String preferred_time_of_day
+        +bool completed
+        +mark_complete()
         +is_due_today() bool
         +get_priority_value() int
         +get_display_label() String
@@ -46,11 +49,11 @@ classDiagram
         +get_skipped_summary() String
     }
 
-    Owner    - Task : manages
-    Owner    - Pet : owns
-    Schedule - Owner : belongs to
-    Schedule - Pet : scheduled for
-    Schedule - Task : includes
+    Owner    --> Task : manages
+    Owner    --> Pet : owns
+    Schedule --> Owner : belongs to
+    Schedule --> Pet : scheduled for
+    Schedule --> Task : includes
 
 %% ─────────────────────────────────────────────────────────────────────────────
 %% UML Class Diagram
@@ -83,6 +86,7 @@ classDiagram
 %% │ +String name                     │                 │               │
 %% │ +int available_minutes_per_day   │                 │               │ includes
 %% │ +dict preferences                │                 │               │
+%% │ +List~Task~ tasks                │                 │               │
 %% ├──────────────────────────────────┤                 │               │
 %% │ +add_task(task)                  │◆─ manages───────────────────────┼──────────────────────────┐
 %% │ +remove_task(task)               │                 │               │                          │
@@ -96,7 +100,9 @@ classDiagram
 %%                │                    │                    │ +int priority                     │
 %%                ▼                    ▼                    │ +String frequency                 │
 %%          ┌─────────────────────────────┐                 │ +String preferred_time_of_day     │
+%%                                                          │ +bool completed                   │
 %%          │             Pet             │                 ├───────────────────────────────────┤
+%%                                                          │ +mark_complete()                  │
 %%          ├─────────────────────────────┤                 │ +is_due_today() : bool            │
 %%          │ +String name                │                 │ +get_priority_value() : int       │
 %%          │ +String species             │                 │ +get_display_label() : String     │
