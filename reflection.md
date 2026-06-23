@@ -4,8 +4,7 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+My app needs to do three main things: let a user add a pet along with some basic owner information, let the user create and edit care tasks for that pet (each task has a duration and a priority level), and then generate a daily plan that organizes those tasks in a useful order. I started by thinking about what data the app has to keep track of — who the pet is, what needs to be done for it, and how to turn that list of tasks into a schedule for the day. Before thinking about classes or methods, I just wanted to make sure these three actions felt complete enough to build around. That gave me a rough sense of what pieces the app would need.
 
 **b. Design changes**
 
