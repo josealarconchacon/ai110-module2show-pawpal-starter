@@ -24,13 +24,13 @@ classDiagram
         +String name
         +String category
         +int duration_minutes
-        +int priority
+        +String priority
         +String frequency
         +String preferred_time_of_day
         +bool completed
         +mark_complete()
         +is_due_today() bool
-        +get_priority_value() int
+        +get_priority_value() int  %% maps low/medium/high → 3/2/1
         +get_display_label() String
     }
 
@@ -97,7 +97,7 @@ classDiagram
 %%             owns                                     │   │ +String name                      │
 %%                │                                     │   │ +String category                  │
 %%                │                    ┌────────────────┘   │ +int duration_minutes             │
-%%                │                    │                    │ +int priority                     │
+%%                │                    │                    │ +String priority                  │
 %%                ▼                    ▼                    │ +String frequency                 │
 %%          ┌─────────────────────────────┐                 │ +String preferred_time_of_day     │
 %%                                                          │ +bool completed                   │
