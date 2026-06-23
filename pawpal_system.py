@@ -14,11 +14,17 @@ class Pet:
 
     def get_care_profile(self) -> dict:
         """Returns a dictionary summarizing the pet's profile, including species, breed, age, and special needs."""
-        pass
+        return {
+            "name": self.name,
+            "species": self.species,
+            "breed": self.breed,
+            "age": self.age,
+            "special_needs": self.special_needs,
+        }
 
     def has_special_needs(self) -> bool:
         """Returns True if the pet has any special needs, False otherwise."""
-        pass
+        return len(self.special_needs) > 0
 
 
 @dataclass
@@ -30,18 +36,34 @@ class Task:
     priority: int
     frequency: str
     preferred_time_of_day: str
+    completed: bool = False
+
+    def mark_complete(self):
+        """Sets the task's completed status to True."""
+        self.completed = True
 
     def is_due_today(self) -> bool:
         """Returns True if this task should be performed today based on its frequency."""
-        pass
+        today = date.today()
+        freq = self.frequency.lower()
+        if freq == "daily":
+            return True
+        elif freq == "weekly":
+            return today.weekday() == 0  # Mondays
+        elif freq == "bi-weekly":
+            week_number = today.isocalendar()[1]
+            return today.weekday() == 0 and week_number % 2 == 0
+        elif freq == "monthly":
+            return today.day == 1
+        return True
 
     def get_priority_value(self) -> int:
         """Returns the numeric priority of this task, used for sorting when building a schedule."""
-        pass
+        return self.priority
 
     def get_display_label(self) -> str:
         """Returns a label for the task, combining name, category, and duration."""
-        pass
+        return f"{self.name} [{self.category}] — {self.duration_minutes} min"
 
 
 class Owner:
@@ -50,23 +72,24 @@ class Owner:
         self.name = name
         self.available_minutes_per_day = available_minutes_per_day
         self.preferences = preferences
-        self.tasks: List = []
+        self.tasks: List[Task] = []
 
-    def add_task(self, task):
+    def add_task(self, task: Task):
         """Adds a Task to the owner's managed task list."""
-        pass
+        self.tasks.append(task)
 
-    def remove_task(self, task):
+    def remove_task(self, task: Task):
         """Removes a Task from the owner's managed task list."""
-        pass
+        if task in self.tasks:
+            self.tasks.remove(task)
 
-    def get_tasks(self) -> List:
+    def get_tasks(self) -> List[Task]:
         """Returns the full list of Tasks currently managed by this owner."""
-        pass
+        return self.tasks
 
-    def set_availability(self, minutes):
+    def set_availability(self, minutes: int):
         """Updates the owner's available time per day in minutes."""
-        pass
+        self.available_minutes_per_day = minutes
 
 
 class Schedule:
@@ -77,28 +100,52 @@ class Schedule:
         self.pet = pet
         self.slots: List = []
         self.total_minutes_used: int = 0
-        self.skipped_tasks: List = []
+        self.skipped_tasks: List[Task] = []
 
-    def generate(self, tasks, available_minutes):
+    def generate(self, tasks: List[Task], available_minutes: int):
         """Populates slots by fitting tasks into the available time budget in priority order."""
-        pass
+        due_tasks = [t for t in tasks if t.is_due_today()]
+        sorted_tasks = sorted(due_tasks, key=lambda t: t.get_priority_value())
 
-    def add_slot(self, start_time, task):
+        current_minute = 0
+        time_remaining = available_minutes
+
+        for task in sorted_tasks:
+            if self.fits_in_budget(task, time_remaining):
+                self.add_slot(current_minute, task)
+                current_minute += task.duration_minutes
+                time_remaining -= task.duration_minutes
+            else:
+                self.skipped_tasks.append(task)
+
+    def add_slot(self, start_time: int, task: Task):
         """Appends a (start_time, task) entry to the schedule's slot list and updates total_minutes_used."""
-        pass
+        self.slots.append((start_time, task))
+        self.total_minutes_used += task.duration_minutes
 
-    def fits_in_budget(self, task, time_remaining) -> bool:
+    def fits_in_budget(self, task: Task, time_remaining: int) -> bool:
         """Returns True if the task's duration fits within the remaining available minutes."""
-        pass
+        return task.duration_minutes <= time_remaining
 
     def is_full(self) -> bool:
         """Returns True if no available minutes remain for additional tasks."""
-        pass
+        return self.total_minutes_used >= self.owner.available_minutes_per_day
 
     def get_summary(self) -> str:
         """Returns a formatted string listing all scheduled slots and total minutes used."""
-        pass
+        if not self.slots:
+            return "No tasks scheduled."
+        lines = [f"Schedule for {self.pet.name} on {self.date} (Owner: {self.owner.name}):"]
+        for start_time, task in self.slots:
+            lines.append(f"  +{start_time:>3} min — {task.get_display_label()}")
+        lines.append(f"Total time used: {self.total_minutes_used} min")
+        return "\n".join(lines)
 
     def get_skipped_summary(self) -> str:
         """Returns a formatted string listing all tasks that were skipped due to time constraints."""
-        pass
+        if not self.skipped_tasks:
+            return "No tasks skipped."
+        lines = ["Skipped tasks (insufficient time):"]
+        for task in self.skipped_tasks:
+            lines.append(f"  - {task.get_display_label()}")
+        return "\n".join(lines)
