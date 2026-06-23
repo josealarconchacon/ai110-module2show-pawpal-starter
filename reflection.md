@@ -18,6 +18,8 @@ I ended up with four classes: `Pet`, `Task`, `Owner`, and `Schedule`. Each one h
 
 Yes, one thing caught me when reviewing the skeleton more carefully. The `Owner` class had methods for `add_task`, `remove_task`, and `get_tasks`, but `__init__` never actually initialized a `tasks` list. Every one of those methods would have crashed immediately at runtime because there was nothing to add to or read from. I added `self.tasks: List = []` to the constructor to fix that.
 
+The brief calls this component `Scheduler,` but I went with Schedule instead. The class holds a single day's plan for one owner and pet (`slots, totals used, skipped tasks`), so it felt more like a thing than a doer, and Schedule matched that better.
+
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
