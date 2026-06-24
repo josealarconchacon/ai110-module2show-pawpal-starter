@@ -43,28 +43,20 @@ def test_add_task_increases_task_count(sample_task_mock):
     assert len(owner.get_tasks()) == count_before + 1
 
 
-def test_is_due_today_unknown_frequency_returns_false():
+def test_is_due_today_unknown_frequency_returns_false(sample_task_mock):
     """An unrecognized frequency string should not silently schedule the task every day."""
-    task = Task(
-        name="Mystery Task",
-        category="Unknown",
-        duration_minutes=10,
-        priority="low",
-        frequency="bi_weekly",  # typo — underscore instead of hyphen
-        preferred_time_of_day="morning",
-    )
-    assert task.is_due_today() is False
+    # 1. Arrange: Override the fixture's frequency with a typo (underscore instead of hyphen)
+    sample_task_mock.frequency = "bi_weekly"
+    # 2. Act: Check if the task is due today
+    result = sample_task_mock.is_due_today()
+    # 3. Assert: Verify that an unknown frequency does not schedule the task
+    assert result is False
 
 
-def test_is_due_today_daily_always_returns_true():
+def test_is_due_today_daily_always_returns_true(sample_task_mock):
     """A daily task must always be due today."""
-    task = Task(
-        name="Feeding",
-        category="Nutrition",
-        duration_minutes=10,
-        priority="high",
-        frequency="daily",
-        preferred_time_of_day="morning",
-    )
-    assert task.is_due_today() is True
+    # 1. Act: Check if the daily task is due today (fixture already has frequency="daily")
+    result = sample_task_mock.is_due_today()
+    # 2. Assert: Verify a daily task is always scheduled
+    assert result is True
 
