@@ -42,3 +42,29 @@ def test_add_task_increases_task_count(sample_task_mock):
     # 3. Assert: Verify the task count increased by exactly one
     assert len(owner.get_tasks()) == count_before + 1
 
+
+def test_is_due_today_unknown_frequency_returns_false():
+    """An unrecognized frequency string should not silently schedule the task every day."""
+    task = Task(
+        name="Mystery Task",
+        category="Unknown",
+        duration_minutes=10,
+        priority="low",
+        frequency="bi_weekly",  # typo — underscore instead of hyphen
+        preferred_time_of_day="morning",
+    )
+    assert task.is_due_today() is False
+
+
+def test_is_due_today_daily_always_returns_true():
+    """A daily task must always be due today."""
+    task = Task(
+        name="Feeding",
+        category="Nutrition",
+        duration_minutes=10,
+        priority="high",
+        frequency="daily",
+        preferred_time_of_day="morning",
+    )
+    assert task.is_due_today() is True
+

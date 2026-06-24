@@ -55,7 +55,7 @@ class Task:
             return today.weekday() == 0 and week_number % 2 == 0
         elif freq == "monthly":
             return today.day == 1
-        return True
+        return False
 
     def get_priority_value(self) -> int:
         """Returns a numeric value for priority, used for sorting (low=3, medium=2, high=1)"""
