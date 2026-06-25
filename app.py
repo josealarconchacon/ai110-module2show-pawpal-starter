@@ -41,8 +41,26 @@ st.divider()
 
 st.subheader("Quick Demo Inputs (UI only)")
 owner_name = st.text_input("Owner name", value="Jordan")
+available_minutes_per_day = st.number_input(
+    "Available minutes per day", min_value=15, max_value=600, value=90
+)
+st.session_state["owner"] = Owner(
+    name=owner_name,
+    available_minutes_per_day=available_minutes_per_day,
+    preferences={},
+)
 pet_name = st.text_input("Pet name", value="Mochi")
 species = st.selectbox("Species", ["dog", "cat", "other"])
+
+if st.button("Add Pet"):
+    st.session_state["pet"] = Pet(
+        name=pet_name,
+        species=species,
+        breed="Unknown",
+        age=0,
+        special_needs=[],
+    )
+    st.success(f"Pet saved: {pet_name} ({species})")
 
 st.markdown("### Tasks")
 st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
