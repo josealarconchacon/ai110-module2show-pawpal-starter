@@ -61,8 +61,8 @@ Total time used: 30 min
 No tasks skipped.
 
 === Sorted by Time ===
-Feeding: 08:00
-Morning Walk: 14:00
+Morning Walk: 08:00
+Feeding: 08:30
 
 === filter_tasks: incomplete tasks on Luna's schedule ===
   Feeding (completed=False)
