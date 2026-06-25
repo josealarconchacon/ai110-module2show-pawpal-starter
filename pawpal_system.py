@@ -94,8 +94,8 @@ class Owner:
 
 class Schedule:
     """Builds and holds a daily care schedule for a specific owner and pet"""
-    def __init__(self, date: date, owner: Owner, pet: Pet):
-        self.date = date
+    def __init__(self, schedule_date: date, owner: Owner, pet: Pet):
+        self.date = schedule_date
         self.owner = owner
         self.pet = pet
         self.slots: List = []

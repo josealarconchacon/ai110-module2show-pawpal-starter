@@ -60,11 +60,11 @@ task3 = Task(
 )
 
 # --- Luna's schedule: Walk + Feeding ---
-schedule_luna = Schedule(date=date.today(), owner=owner, pet=pet1)
+schedule_luna = Schedule(schedule_date=date.today(), owner=owner, pet=pet1)
 schedule_luna.generate(tasks=[task1, task2], available_minutes=owner.available_minutes_per_day)
 
 # --- Mochi's schedule: Feeding + Grooming ---
-schedule_mochi = Schedule(date=date.today(), owner=owner, pet=pet2)
+schedule_mochi = Schedule(schedule_date=date.today(), owner=owner, pet=pet2)
 schedule_mochi.generate(tasks=[task2, task3], available_minutes=owner.available_minutes_per_day)
 
 print("=== Today's Schedule ===")
