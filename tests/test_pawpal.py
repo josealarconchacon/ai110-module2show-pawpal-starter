@@ -1,5 +1,5 @@
 import pytest
-from datetime import date
+from datetime import date, timedelta
 from pawpal_system import Task, Owner, Pet, Schedule
 
 @pytest.fixture
@@ -83,6 +83,47 @@ def test_is_due_today_daily_always_returns_true(sample_task_mock):
     result = sample_task_mock.is_due_today()
     # 2. Assert: Verify a daily task is always scheduled
     assert result is True
+    
+def test_mark_complete_returns_next_daily_occurrence(sample_task_mock):
+    """Completing a daily task returns a new Task scheduled one day later."""
+    # 1. Arrange: capture the original schedule_date before completing
+    original_date = sample_task_mock.schedule_date
+    # 2. Act: mark the task complete and capture the returned next occurrence task
+    next_task = sample_task_mock.mark_complete()
+    # 3. Assert: a new task was returned, incomplete, dated exactly one day later
+    assert next_task is not None
+    assert next_task.completed is False
+    assert next_task.schedule_date == original_date + timedelta(days=1)
+    assert next_task.name == sample_task_mock.name
+
+
+def test_mark_complete_duplicate_call_returns_none(sample_task_mock):
+    """Calling mark_complete() a second time must not generate a second next-occurrence task."""
+    # 1. Act: complete the task twice
+    first_result = sample_task_mock.mark_complete()
+    second_result = sample_task_mock.mark_complete()
+    # 2. Assert: only the first call produced a next occurrence task
+    assert first_result is not None
+    assert second_result is None
+
+
+def test_mark_complete_non_recurring_frequency_returns_none():
+    """A task with an unsupported frequency should not produce a next occurrence."""
+    # 1. Arrange: a task with a frequency outside daily or weekly
+    task = Task(
+        name="Vet Visit",
+        category="Health",
+        duration_minutes=45,
+        priority="high",
+        frequency="monthly",
+        preferred_time_of_day="afternoon",
+        completed=False,
+    )
+    # 2. Act: mark it complete
+    result = task.mark_complete()
+    # 3. Assert: no next occurrence task is generated
+    assert result is None
+    assert task.completed is True
 
 
 def test_generate_schedules_high_priority_before_medium(sample_schedule, sample_task_mock, medium_priority_task):
