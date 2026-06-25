@@ -18,7 +18,7 @@ I ended up with four classes: `Pet`, `Task`, `Owner`, and `Schedule`. Each one h
 
 `Owner` will stores how much time the owner has available each day and their preferences, and it acts as the container for the task list. Tasks are managed through the owner rather than floating loose. That felt right because in real life, the owner is the one deciding what needs to get done.
 
-`Schedule` is where the actual planning happens. It takes a specific date, owner, and pet, then figures out which tasks fit into the day's time budget and in what order. The separation of `fits_in_budget`, `add_slot`, and `generate` felt important.
+`Schedule` is where the actual planning happens. It takes a specific date, owner, and pet, then figures out which tasks fit into the day's time budget and in what order. The separation of `fits_in_budget`, `add_slot`, and `generate` felt important. A later addition, `sort_by_time`, provides a read-only view of the same slots ordered by each task's `scheduled_time` string — tasks with no time set sort last via a `"99:99"` sentinel — without mutating the original slot list. `filter_tasks` builds on the same slot list, returning only the `Task` objects that match an optional completion status and/or pet name, letting callers query the schedule without exposing the underlying tuple structure.
 
 **b. Design changes**
 
@@ -53,8 +53,13 @@ I also missed completion tracking in my original Task design. The project brief 
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+One thing that caught me off guard was during testing of filter_tasks(). I asked Claude to add a few print statements in main.py to show off the new filtering method (completed/incomplete tasks, filtering by pet name), and when I ran it, the output showed Morning Walk as completed=True. That confused me for a second because I never marked that task complete anywhere in my own code, and I definitely didn't ask for that.
+
+Turns out Claude had quietly added task1.mark_complete() right above my print block, with a comment saying it did this "to make filter results more interesting." It wasn't something I asked for or expected, it just slipped it in on its own to make the demo output look better.
+
+Honestly my first instinct was to assume something was broken in filter_tasks() itself, so I went back and reread the method line by line before I even looked at the rest of main.py. Once I found the extra line Claude had added, it made total sense, the method was working exactly right, it was just operating on data Claude had changed without telling me.
+
+I ended up keeping the line since it's harmless and actually makes the demo output more useful, but it was a good reminder that I can't just assume the AI only does what I asked it to do. I need to actually read through what changed before I trust the output, especially when something doesn't match what I expect.
 
 ---
 
