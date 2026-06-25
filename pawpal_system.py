@@ -1,5 +1,6 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from typing import List
 
 
@@ -37,10 +38,51 @@ class Task:
     frequency: str
     preferred_time_of_day: str
     completed: bool = False
+    scheduled_time: str = ""
+    schedule_date: date = field(default_factory=date.today)
 
-    def mark_complete(self):
-        """Sets the task's completed status to True"""
+    def mark_complete(self) -> "Task | None":
+        """Mark this task complete and return the next occurrence if applicable.
+
+        Sets self.completed to True. If this is the first time the task
+        transitions from incomplete to complete and the frequency is "daily" or
+        "weekly", creates and returns a new Task with the same fields but
+        completed=False and schedule_date advanced by one day or one week
+        respectively. Returns None for any other frequency, or if the task was
+        already completed before this call.
+
+        The caller is responsible for adding the returned task to any Owner or
+        Schedule — this method only creates and returns it.
+
+        Returns:
+            Task | None: the next-occurrence task, or None.
+        """
+        if self.completed:
+            return None
         self.completed = True
+        if self.frequency == "daily":
+            return Task(
+                name=self.name,
+                category=self.category,
+                duration_minutes=self.duration_minutes,
+                priority=self.priority,
+                frequency=self.frequency,
+                preferred_time_of_day=self.preferred_time_of_day,
+                scheduled_time=self.scheduled_time,
+                schedule_date=self.schedule_date + timedelta(days=1),
+            )
+        if self.frequency == "weekly":
+            return Task(
+                name=self.name,
+                category=self.category,
+                duration_minutes=self.duration_minutes,
+                priority=self.priority,
+                frequency=self.frequency,
+                preferred_time_of_day=self.preferred_time_of_day,
+                scheduled_time=self.scheduled_time,
+                schedule_date=self.schedule_date + timedelta(weeks=1),
+            )
+        return None
 
     def is_due_today(self) -> bool:
         """Returns True if this task should be performed today based on its frequency"""
@@ -127,6 +169,18 @@ class Schedule:
         """Returns True if the task's duration fits within the remaining available minutes"""
         return task.duration_minutes <= time_remaining
 
+    def sort_by_time(self) -> list:
+        """Return slots sorted ascending by scheduled_time, empty strings sort last."""
+        return sorted(self.slots, key=lambda t: t[0])
+
+    def filter_tasks(self, completed: bool = None, pet_name: str = None) -> list:
+        """Return Task objects from slots matching the given completion status and/or pet name."""
+        return [
+            task for _, task in self.slots
+            if (completed is None or task.completed == completed)
+            and (pet_name is None or self.pet.name == pet_name)
+        ]
+
     def get_summary(self) -> str:
         """Returns a formatted string listing all scheduled slots and total minutes used"""
         if not self.slots:
@@ -148,3 +202,16 @@ class Schedule:
         for task in self.skipped_tasks:
             lines.append(f"  - {task.get_display_label()}")
         return "\n".join(lines)
+
+    def detect_conflicts(self) -> List[str]:
+        """Returns warning messages for any two tasks sharing the same non-empty scheduled_time."""
+        time_map = defaultdict(list)
+        for _, task in self.slots:
+            if task.scheduled_time:
+                time_map[task.scheduled_time].append(task.name)
+        warnings = []
+        for time, names in time_map.items():
+            for i in range(len(names)):
+                for j in range(i + 1, len(names)):
+                    warnings.append(f"Conflict: '{names[i]}' and '{names[j]}' both scheduled at {time}")
+        return warnings
