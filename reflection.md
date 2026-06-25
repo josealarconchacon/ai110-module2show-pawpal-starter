@@ -18,7 +18,7 @@ I ended up with four classes: `Pet`, `Task`, `Owner`, and `Schedule`. Each one h
 
 `Owner` will stores how much time the owner has available each day and their preferences, and it acts as the container for the task list. Tasks are managed through the owner rather than floating loose. That felt right because in real life, the owner is the one deciding what needs to get done.
 
-`Schedule` is where the actual planning happens. It takes a specific date, owner, and pet, then figures out which tasks fit into the day's time budget and in what order. The separation of `fits_in_budget`, `add_slot`, and `generate` felt important. A later addition, `sort_by_time`, provides a read-only view of the same slots ordered by each task's `scheduled_time` string — tasks with no time set sort last via a `"99:99"` sentinel — without mutating the original slot list. `filter_tasks` builds on the same slot list, returning only the `Task` objects that match an optional completion status and/or pet name, letting callers query the schedule without exposing the underlying tuple structure.
+`Schedule` is where the actual planning happens. It takes a specific date, owner, and pet, then figures out which tasks fit into the day's time budget and in what order. The separation of `fits_in_budget`, `add_slot`, and `generate` felt important. A later addition, `sort_by_time`, provides a read-only view of the same slots ordered by each task's `scheduled_time` string — tasks with no time set sort last via a `"99:99"` sentinel — without mutating the original slot list. `filter_tasks` builds on the same slot list, returning only the `Task` objects that match an optional completion status and/or pet name, letting callers query the schedule without exposing the underlying tuple structure. `detect_conflicts` scans the same slots for tasks that share the exact same non-empty `scheduled_time` value and returns a list of human-readable warning strings, one per conflicting pair — it never raises an exception, so callers can decide how to surface the warnings.
 
 **b. Design changes**
 
@@ -39,8 +39,11 @@ I also missed completion tracking in my original Task design. The project brief 
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+The biggest tradeoff in my scheduler is how I handle conflict detection. The brief asks for detecting conflicts "for the same pet or different pets," but my `detect_conflicts()` method only checks within a single Schedule instance, which means it only catches conflicts between tasks for the same pet. If Luna has something at 09:00 and Mochi also has something at 09:00, my system won't flag that as a conflict because each pet gets its own separate Schedule object and `detect_conflicts()` never looks across them.
+
+I went back and forth on whether to fix this, but I decided to leave it as a known limitation instead of building a second method to compare across multiple schedules. Honestly, same pet conflicts felt like the more realistic problem to solve. An owner can walk one dog while feeding a cat at the same time, those aren't actually in conflict in real life, but two tasks for the same animal at the same time genuinely can't both happen.
+
+The other tradeoff is that my conflict check only looks for exact matching scheduled_time values, not actual overlapping durations. A 30-minute walk starting at 09:00 and a 15-minute task starting at 09:15 would genuinely overlap in real life, but my system wouldn't catch that since it's only comparing the start times directly, not checking if one task's time range runs into another's. I chose this on purpose too, since calculating actual overlapping windows would mean tracking end times and comparing ranges instead of just comparing two strings, which felt like a lot more complex.
 
 ---
 
@@ -53,11 +56,11 @@ I also missed completion tracking in my original Task design. The project brief 
 
 **b. Judgment and verification**
 
-One thing that caught me off guard was during testing of filter_tasks(). I asked Claude to add a few print statements in main.py to show off the new filtering method (completed/incomplete tasks, filtering by pet name), and when I ran it, the output showed Morning Walk as completed=True. That confused me for a second because I never marked that task complete anywhere in my own code, and I definitely didn't ask for that.
+One thing that caught me off guard was during testing of filter_tasks(). I asked Claude to add a few print statements in `main.py` to show off the new filtering method (completed/incomplete tasks, filtering by pet name), and when I ran it, the output showed Morning Walk as completed=True. That confused me for a second because I never marked that task complete anywhere in my own code, and I definitely didn't ask for that.
 
-Turns out Claude had quietly added task1.mark_complete() right above my print block, with a comment saying it did this "to make filter results more interesting." It wasn't something I asked for or expected, it just slipped it in on its own to make the demo output look better.
+Turns out Claude had quietly added `task1.mark_complete()` right above my print block, with a comment saying it did this "to make filter results more interesting." It wasn't something I asked for or expected, it just slipped it in on its own to make the demo output look better.
 
-Honestly my first instinct was to assume something was broken in filter_tasks() itself, so I went back and reread the method line by line before I even looked at the rest of main.py. Once I found the extra line Claude had added, it made total sense, the method was working exactly right, it was just operating on data Claude had changed without telling me.
+Honestly my first instinct was to assume something was broken in `filter_tasks()` itself, so I went back and reread the method line by line before I even looked at the rest of `main.py`. Once I found the extra line Claude had added, it made total sense, the method was working exactly right, it was just operating on data Claude had changed without telling me.
 
 I ended up keeping the line since it's harmless and actually makes the demo output more useful, but it was a good reminder that I can't just assume the AI only does what I asked it to do. I need to actually read through what changed before I trust the output, especially when something doesn't match what I expect.
 
