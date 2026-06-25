@@ -46,19 +46,42 @@ pip install -r requirements.txt
 
 ```
 === Today's Schedule ===
-Schedule for Luna on 2026-06-23 (Owner: Alex Rivera):
+Schedule for Luna on 2026-06-25 (Owner: Alex Rivera):
   08:00 — Morning Walk [Exercise] — 30 min [priority: high]
   08:30 — Feeding [Nutrition] — 10 min [priority: medium]
 Total time used: 40 min
 
 No tasks skipped.
 
-Schedule for Mochi on 2026-06-23 (Owner: Alex Rivera):
+Schedule for Mochi on 2026-06-25 (Owner: Alex Rivera):
   08:00 — Feeding [Nutrition] — 10 min [priority: medium]
   08:10 — Grooming [Hygiene] — 20 min [priority: low]
 Total time used: 30 min
 
 No tasks skipped.
+=== Sorted by Time ===
+Feeding: 08:00
+Morning Walk: 14:00
+
+=== filter_tasks: incomplete tasks on Luna's schedule ===
+  Feeding (completed=False)
+
+=== filter_tasks: completed tasks on Luna's schedule ===
+  Morning Walk (completed=True)
+
+=== filter_tasks: tasks for pet 'Luna' ===
+  Morning Walk
+  Feeding
+
+=== filter_tasks: tasks for pet 'Mochi' (should be empty on Luna's schedule) ===
+  []
+
+=== Recurring Task: mark_complete() on Feeding ===
+  Feeding | schedule_date: 2026-06-25 (completed=True)
+  Feeding | schedule_date: 2026-06-26 (next occurrence)
+
+=== Conflict Detection ===
+  Conflict: 'Medication' and 'Dental Cleaning' both scheduled at 09:00
 ```
 
 ## 🧪 Testing PawPal+
