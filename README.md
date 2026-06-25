@@ -81,12 +81,12 @@ Sample test output:
 
 > Fill in once you've implemented scheduling logic.
 
-| Feature           | Method(s)                     | Notes                                                                                                                                                                                                                              |
-| ----------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Task sorting      | `Schedule.sort_by_time()`     | Returns a new list of slots sorted by `scheduled_time`, doesn't mutate `self.slots`. Tasks with no `scheduled_time` sort last.                                                                                                     |
-| Filtering         | `Schedule.filter_tasks()`     | Filters by completed status and/or `pet_name`, combined with AND logic.                                                                                                                                                            |
-| Conflict handling | `Schedule.detect_conflicts()` | Flags tasks with the exact same `scheduled_time` within one pet's schedule. Returns warning strings instead of raising errors. Only checks within a single pet's schedule, not across pets — does not check overlapping durations. |
-| Recurring tasks   | `Task.mark_complete()`        | When a `"daily"` or `"weekly"` task is completed for the first time, returns a new `Task` instance scheduled one day/week later. Returns `None` for other frequencies or duplicate completions.                                    |
+| Feature           | Method(s)                     | Notes                                                                                                                                                                                                                             |
+| ----------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task sorting      | `Schedule.sort_by_time()`     | Returns a new list of slots sorted by `scheduled_time`, doesn't mutate `self.slots`. Tasks with no `scheduled_time` sort last.                                                                                                    |
+| Filtering         | `Schedule.filter_tasks()`     | Filters by completed status and/or `pet_name`, combined with AND logic.                                                                                                                                                           |
+| Conflict handling | `Schedule.detect_conflicts()` | Flags tasks with the exact same `scheduled_time` within one pet's schedule. Returns warning strings instead of raising errors. Only checks within a single pet's schedule, not across pets, does not check overlapping durations. |
+| Recurring tasks   | `Task.mark_complete()`        | When a `"daily"` or `"weekly"` task is completed for the first time, returns a new `Task` instance scheduled one day/week later. Returns `None` for other frequencies or duplicate completions.                                   |
 
 ## 📸 Demo Walkthrough
 
