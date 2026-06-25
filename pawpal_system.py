@@ -127,10 +127,6 @@ class Schedule:
         """Returns True if the task's duration fits within the remaining available minutes"""
         return task.duration_minutes <= time_remaining
 
-    def is_full(self) -> bool:
-        """Returns True if no available minutes remain for additional tasks"""
-        return self.total_minutes_used >= self.owner.available_minutes_per_day
-
     def get_summary(self) -> str:
         """Returns a formatted string listing all scheduled slots and total minutes used"""
         if not self.slots:

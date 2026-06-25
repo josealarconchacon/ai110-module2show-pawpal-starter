@@ -44,7 +44,6 @@ classDiagram
         +generate(tasks, available_minutes)
         +add_slot(start_time, task)
         +fits_in_budget(task, time_remaining) bool
-        +is_full() bool
         +get_summary() String
         +get_skipped_summary() String
     }
@@ -72,7 +71,6 @@ classDiagram
 %%                         │ +generate(tasks, available_minutes)              │
 %%                         │ +add_slot(start_time, task)                      │
 %%                         │ +fits_in_budget(task, time_remaining) : bool     │
-%%                         │ +is_full() : bool                                │
 %%                         │ +get_summary() : String                          │
 %%                         │ +get_skipped_summary() : String                  │
 %%                         └────┬───────────────────────┬──────────────┬──────┘
