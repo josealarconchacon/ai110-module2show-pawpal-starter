@@ -46,6 +46,9 @@ classDiagram
         +fits_in_budget(task, time_remaining) bool
         +get_summary() String
         +get_skipped_summary() String
+        +sort_by_time() List
+        +filter_tasks(completed, pet_name) List
+        +detect_conflicts() List
     }
 
     Owner    --> Task : manages
@@ -73,6 +76,9 @@ classDiagram
 %%                         │ +fits_in_budget(task, time_remaining) : bool     │
 %%                         │ +get_summary() : String                          │
 %%                         │ +get_skipped_summary() : String                  │
+%%                         │ +sort_by_time() : List                           │
+%%                         │ +filter_tasks(completed, pet_name) : List        │
+%%                         │ +detect_conflicts() : List                       │
 %%                         └────┬───────────────────────┬──────────────┬──────┘
 %%                              │                       │               │
 %%                              │                       │               │ 
