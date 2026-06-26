@@ -171,7 +171,7 @@ class Schedule:
 
     def sort_by_time(self) -> list:
         """Return slots sorted ascending by scheduled_time, empty strings sort last."""
-        return sorted(self.slots, key=lambda t: t[0])
+        return sorted(self.slots, key=lambda t: t[1].scheduled_time if t[1].scheduled_time else "99:99")
 
     def filter_tasks(self, completed: bool = None, pet_name: str = None) -> list:
         """Return Task objects from slots matching the given completion status and/or pet name."""

@@ -37,7 +37,7 @@ task1 = Task(
     frequency="daily",
     preferred_time_of_day="morning",
     completed=False,
-    scheduled_time="08:00"
+    scheduled_time="14:00"
 )
 
 task2 = Task(
@@ -109,9 +109,7 @@ print(schedule_mochi.get_skipped_summary())
 
 print("=== Sorted by Time ===")
 for slot, task in schedule_luna.sort_by_time():
-    total = 8 * 60 + slot
-    h, m = divmod(total, 60)
-    print(f"{task.name}: {h:02d}:{m:02d}")
+    print(f"{task.name}: {task.scheduled_time}")
 
 # Mark one task complete to make filter results more interesting
 task1.mark_complete()
