@@ -98,8 +98,21 @@ pytest --cov
 Sample test output:
 
 ```
-# Paste your pytest output here
+=============================== test session starts ===============================
+platform darwin -- Python 3.13.5, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/**********/Desktop/CodePath/ai110-module2show-pawpal-starter
+configfile: pytest.ini
+plugins: anyio-4.14.0, cov-7.1.0
+collected 17 items
+
+tests/test_pawpal.py .................                                      [100%]
+
+=============================== 17 passed in 0.04s ================================
 ```
+
+The 17 tests cover the core scheduling behaviors built into PawPal+, marking tasks as complete and verifying that daily/weekly recurring tasks correctly generate a next occurrence. They also validate schedule generation, making sure high-priority tasks are placed first and that tasks exceeding the available time budget get skipped. Beyond that, the suite checks that `sort_by_time()` returns slots in the right order, that `filter_tasks()` correctly narrows results by completion status or pet name, and that `detect_conflicts()` catches two tasks assigned to the same time slot.
+
+Confidence Level: ⭐⭐⭐⭐⭐ (X/5)
 
 ## 📐 Smarter Scheduling
 
