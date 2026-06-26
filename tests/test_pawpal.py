@@ -158,3 +158,165 @@ def test_get_summary_returns_formatted_output(sample_schedule, sample_task_mock)
     assert "Luna" in summary
     assert "Total time used" in summary
 
+
+def test_sort_by_time_orders_ascending(sample_schedule):
+    """sort_by_time() must return slots in ascending scheduled_time order."""
+    # 1. Arrange: create two tasks whose scheduled_time values are intentionally out of order
+    afternoon_task = Task(
+        name="Afternoon Walk",
+        category="Exercise",
+        duration_minutes=20,
+        priority="medium",
+        frequency="daily",
+        preferred_time_of_day="afternoon",
+        scheduled_time="14:00",
+    )
+    morning_task = Task(
+        name="Morning Feed",
+        category="Nutrition",
+        duration_minutes=10,
+        priority="medium",
+        frequency="daily",
+        preferred_time_of_day="morning",
+        scheduled_time="08:00",
+    )
+    sample_schedule.generate(tasks=[afternoon_task, morning_task], available_minutes=60)
+    # 2. Act: sort the schedule slots by scheduled_time
+    sorted_slots = sample_schedule.sort_by_time()
+    # 3. Assert: the earlier time appears first in the returned list
+    assert sorted_slots[0][1].scheduled_time == "08:00"
+    assert sorted_slots[1][1].scheduled_time == "14:00"
+
+
+def test_sort_by_time_empty_scheduled_time_sorts_last(sample_schedule):
+    """A task with no scheduled_time must appear after tasks that have one."""
+    # 1. Arrange: one task with a real time and one with an empty scheduled_time
+    timed_task = Task(
+        name="Grooming",
+        category="Hygiene",
+        duration_minutes=15,
+        priority="medium",
+        frequency="daily",
+        preferred_time_of_day="morning",
+        scheduled_time="09:00",
+    )
+    no_time_task = Task(
+        name="Play Time",
+        category="Exercise",
+        duration_minutes=20,
+        priority="medium",
+        frequency="daily",
+        preferred_time_of_day="afternoon",
+        scheduled_time="",
+    )
+    sample_schedule.generate(tasks=[timed_task, no_time_task], available_minutes=60)
+    # 2. Act: sort the populated schedule
+    sorted_slots = sample_schedule.sort_by_time()
+    # 3. Assert: the task with no scheduled_time is last
+    assert sorted_slots[-1][1].scheduled_time == ""
+
+
+def test_detect_conflicts_flags_same_time_tasks(sample_schedule):
+    """detect_conflicts() must return exactly one warning when two tasks share a scheduled_time."""
+    # 1. Arrange: two tasks assigned the same scheduled_time
+    task_a = Task(
+        name="Bath",
+        category="Hygiene",
+        duration_minutes=15,
+        priority="medium",
+        frequency="daily",
+        preferred_time_of_day="morning",
+        scheduled_time="10:00",
+    )
+    task_b = Task(
+        name="Vet Check",
+        category="Health",
+        duration_minutes=20,
+        priority="high",
+        frequency="daily",
+        preferred_time_of_day="morning",
+        scheduled_time="10:00",
+    )
+    sample_schedule.generate(tasks=[task_a, task_b], available_minutes=60)
+    # 2. Act: check for scheduling conflicts
+    warnings = sample_schedule.detect_conflicts()
+    # 3. Assert: exactly one warning is produced and it names both tasks
+    assert len(warnings) == 1
+    assert "Bath" in warnings[0]
+    assert "Vet Check" in warnings[0]
+
+
+def test_detect_conflicts_only_flags_overlapping_pair(sample_schedule):
+    """detect_conflicts() must return exactly one warning when only two of three tasks overlap."""
+    # 1. Arrange: two tasks at the same time plus a third at a distinct time
+    conflict_a = Task(
+        name="Morning Run",
+        category="Exercise",
+        duration_minutes=20,
+        priority="high",
+        frequency="daily",
+        preferred_time_of_day="morning",
+        scheduled_time="07:00",
+    )
+    conflict_b = Task(
+        name="Morning Feed",
+        category="Nutrition",
+        duration_minutes=10,
+        priority="medium",
+        frequency="daily",
+        preferred_time_of_day="morning",
+        scheduled_time="07:00",
+    )
+    no_conflict = Task(
+        name="Evening Walk",
+        category="Exercise",
+        duration_minutes=15,
+        priority="low",
+        frequency="daily",
+        preferred_time_of_day="evening",
+        scheduled_time="18:00",
+    )
+    sample_schedule.generate(tasks=[conflict_a, conflict_b, no_conflict], available_minutes=120)
+    # 2. Act: detect all conflicts in the generated schedule
+    warnings = sample_schedule.detect_conflicts()
+    # 3. Assert: exactly one conflict pair is reported, not zero and not more than one
+    assert len(warnings) == 1
+
+
+def test_detect_conflicts_ignores_empty_scheduled_time(sample_schedule):
+    """detect_conflicts() must not treat two tasks with no scheduled_time as a conflict."""
+    # 1. Arrange: two tasks both with scheduled_time left empty
+    task_a = Task(
+        name="Free Play",
+        category="Exercise",
+        duration_minutes=20,
+        priority="medium",
+        frequency="daily",
+        preferred_time_of_day="afternoon",
+        scheduled_time="",
+    )
+    task_b = Task(
+        name="Cuddle Time",
+        category="Bonding",
+        duration_minutes=15,
+        priority="low",
+        frequency="daily",
+        preferred_time_of_day="evening",
+        scheduled_time="",
+    )
+    sample_schedule.generate(tasks=[task_a, task_b], available_minutes=60)
+    # 2. Act: run conflict detection
+    warnings = sample_schedule.detect_conflicts()
+    # 3. Assert: empty scheduled_time values are ignored and no warnings are produced
+    assert warnings == []
+
+
+def test_empty_schedule_methods_return_safely(sample_owner, sample_pet):
+    """sort_by_time(), filter_tasks(), and detect_conflicts() must all return [] on an empty schedule."""
+    # 1. Arrange: a fresh schedule with no tasks generated
+    empty_schedule = Schedule(schedule_date=date.today(), owner=sample_owner, pet=sample_pet)
+    # 2. Act & Assert: each method returns an empty list without raising an exception
+    assert empty_schedule.sort_by_time() == []
+    assert empty_schedule.filter_tasks() == []
+    assert empty_schedule.detect_conflicts() == []
+
