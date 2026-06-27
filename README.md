@@ -112,7 +112,9 @@ tests/test_pawpal.py .................                                      [100
 
 The 17 tests cover the core scheduling behaviors built into PawPal+, marking tasks as complete and verifying that daily/weekly recurring tasks correctly generate a next occurrence. They also validate schedule generation, making sure high-priority tasks are placed first and that tasks exceeding the available time budget get skipped. Beyond that, the suite checks that `sort_by_time()` returns slots in the right order, that `filter_tasks()` correctly narrows results by completion status or pet name, and that `detect_conflicts()` catches two tasks assigned to the same time slot.
 
-Confidence Level: ⭐⭐⭐⭐⭐ (X/5)
+Confidence Level: ⭐⭐⭐½ (3.5/5)
+
+I'm fairly confident in this system, all 17 tests pass and they actually cover the behaviors that matter most, sorting, filtering, conflict detection, and recurrence. But I'm not giving it a full 5 stars because I know firsthand that passing tests don't catch everything. For example, earlier in this project, sort_by_time() quietly got changed to sort by the wrong field, and none of my tests caught it since I hadn't written tests for that method yet at the time, I only caught it because I happened to look closely at the terminal output and it didn't match what I expected. That experience made me trust my test suite more, but also made me realize that a green checkmark only means what I actually wrote tests for, not that the whole system is bulletproof.
 
 ## 📐 Smarter Scheduling
 
