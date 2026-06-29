@@ -34,8 +34,9 @@ I also missed completion tracking in my original Task design. The project brief 
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+My schedule really only considers two constraints: time and priority. `generate()` filters tasks down to whatever's actually due today, sorts what's left by priority so high-priority tasks get first dibs on the available time, and once the budget runs out, whatever's left just gets skipped. Those are the two constraints that actually decide whether a task happens at all.
+
+I do have `Owner.preferences` and `Task.preferred_time_of_day` sitting in my classes, but honestly I never wired either one into the actual scheduling logic, they're stored, but `generate()` doesn't touch them. Thinking back on it, I think it came down to time and priority being the constraints that actually have consequences if I ignore them. If a task doesn't fit the time budget, it genuinely doesn't happen that day. If a task gets scheduled outside someone's preferred time, it still happens, just not at the ideal moment. Preferences always felt like a nice layer to add on top of a working schedule rather than something the schedule couldn't function without, and by the time Phase 4's actual requirements (sorting, filtering, conflicts, recurrence) ate up most of my time, I just never circled back to it. So there's a real gap between what I originally designed for and what I actually built. If I had more time, I'd at least want preferred_time_of_day to act as a tiebreaker when two tasks land on the same priority.
 
 **b. Tradeoffs**
 
@@ -51,8 +52,15 @@ The other tradeoff is that my conflict check only looks for exact matching sched
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used Claude throughout this project as a reviewer for code generated. The two things that made the biggest difference were catching problems before they became real issues, like the empty scheduled_time validation gap, the sort_by_time() regression, and the mark-complete cascade bug, and getting help scoping my prompts so they stayed narrow and specific instead of vague.
+
+One example I'd point to for rejecting or modifying an AI suggestion: during Step 5, Claude suggested a more compact version of detect_conflicts() using `itertools.combinations` and a list comprehension, and I kept my original nested loop instead because I could trace through it without having to slow down. I also considered building a second method to check conflicts across multiple pets' schedules, and deliberately didn't, since that felt like solving a problem the assignment wasn't actually asking me to solve. And when I built a "Mark complete" button in the UI and hit a real cascading bug where clicking it once kept adding duplicate tasks, I chose to revert the feature instead of pushing forward with something I didn't fully trust yet.
+
+I used separate chat sessions for different phases because it helped me stay focused on one specific problem at a time, instead of having one giant thread where the AI might pull in context from an earlier, unrelated phase and get confused about what I was actually asking for.
+
+What I learned is that being the "lead architect" mostly means staying skeptical, even when something looks fine. The AI can write working code fast, but it can also quietly do things I didn't ask for, like marking a task complete just to make a demo look better, or rewriting a method's logic without me noticing until the output stopped matching what I expected. None of that was malicious, it was just the AI making small decisions on its own, and if I hadn't kept checking, those decisions would've shipped as if they were mine.
+
+I also learned that "it works" and "I understand why it works" aren't the same thing, and only one of those actually matters if I'm the one who has to explain or defend this code later. That's basically why I kept my own nested loop over the cleverer combinations version, and why I backed out of the mark-complete feature instead of trying to patch around a bug I didn't fully understand yet. Being the architect isn't about writing every line myself, it's about being the one who actually knows what every line is doing, and being willing to say no to something even when it's technically correct.
 
 **b. Judgment and verification**
 
@@ -70,13 +78,14 @@ I ended up keeping the line since it's harmless and actually makes the demo outp
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+The behavior I focused on most was conflict detection, making sure detect_conflicts() actually flags two tasks at the same scheduled_time, only flags the pair that actually overlaps when a third unrelated task is in the mix, and correctly ignores tasks with an empty scheduled_time instead of treating them as conflicting. Beyond that I also tested recurrence, schedule generation with priority sorting and time-budget skipping, and sorting by time, but conflict detection felt like the one most likely to silently produce a wrong answer instead of an obvious error.
+That mattered because a missed conflict is the kind of bug a pet owner would never notice until two things were actually double-booked in real life, there's no crash, no warning, the app just quietly tells you everything's fine when it isn't.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+I'd say about 3.5 out of 5. All 17 tests pass and cover the behaviors that matter most, sorting, filtering, conflicts, recurrence. `sort_by_time()` once quietly broke and no test caught it, since I hadn't written one yet, I only noticed because the output looked off.
+
+If I had more time, I'd test something I found late while building the UI: conflict detection only checks scheduled_time, not schedule_date, so a next-occurrence task for tomorrow still gets flagged as conflicting with today. I never fixed it, just noticed it. I'd also want a test proving cross-pet conflicts really don't get caught, since that's documented but never actually verified.
 
 ---
 
@@ -84,12 +93,12 @@ I ended up keeping the line since it's harmless and actually makes the demo outp
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+I'm most satisfied with how I handled the bugs that came up, especially catching the `sort_by_time()` regression and the mark-complete cascade before either one made it into a final submission. Neither was something I caught by trusting the code, I caught both because the output didn't match what I expected and I stopped to check.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+If I did this again, I'd write tests for new methods as soon as I build them instead of waiting until Phase 5, since that's exactly the gap that let `sort_by_time()` break silently. I'd also want to actually wire `preferred_time_of_day` into the scheduler instead of leaving it as unused data.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+The biggest thing I learned is that AI-generated code that runs without errors isn't the same as AI-generated code that's correct, the only way I caught my real bugs was by checking the actual output against what I expected, not by reading the code and assuming it was fine. Being the one responsible for a project means staying skeptical of your own tools, even the ones that are usually right.

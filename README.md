@@ -22,6 +22,16 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## ✨ Features
+
+- Pet and owner profile management (`Owner`, `Pet` classes)
+- Priority-based schedule generation that fits tasks into a daily time budget (`Schedule.generate()`)
+- Sorting tasks by scheduled time (`Schedule.sort_by_time()`)
+- Filtering tasks by completion status and/or pet name (`Schedule.filter_tasks()`)
+- Conflict detection for tasks scheduled at the exact same time (`Schedule.detect_conflicts()`)
+- Recurring daily/weekly task logic that generates the next occurrence when a task is completed (`Task.mark_complete()`)
+- A Streamlit UI for adding pets and tasks, generating a schedule, and viewing sorted results, filters, and conflict warnings (`app.py`)
+
 ## Getting started
 
 ### Setup
@@ -129,12 +139,50 @@ I'm fairly confident in this system, all 17 tests pass and they actually cover t
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+The main page lays out all inputs in a single vertical flow, nothing hidden or gated. At the top are two fields for owner info: "Owner name" and "Available minutes per day". Below that, "Pet name" and "Species" fields with an "Add Pet" button let you register a pet. Further down, a Tasks section is always visible with "Task title", "Duration", "Priority", and "Scheduled time" inputs and an "Add task" button. The app validates that task title and scheduled time are not empty and that the scheduled time matches the HH:MM pattern before accepting the entry.
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+Example workflow: fill in the owner form (e.g. "Alex Rivera", 90 min/day) and add a pet (e.g. "Luna", dog) → add a first task ("Morning Walk", 30 min, high priority, 08:00) and a second task ("Feeding", 10 min, medium priority, 08:30) → click **Generate schedule** → the main panel shows the generated plan, a sorted-by-time view of all slots, any conflict warnings (tasks sharing the same scheduled time are flagged in red), and a filter-by-status section listing incomplete and completed tasks separately.
+
+The UI visibly demonstrates four Scheduler behaviors: priority-based generation (high-priority tasks are placed first within the time budget), time-based sorting (`sort_by_time()` orders slots chronologically), conflict detection (two tasks given the same `scheduled_time` are flagged in red via `detect_conflicts()`), and status filtering (`filter_tasks()` separates completed from incomplete tasks). Marking tasks complete and recurrence logic are currently only exercised via the CLI (`main.py`), not yet exposed in the Streamlit UI.
+
+```
+=== Today's Schedule ===
+Schedule for Luna on 2026-06-28 (Owner: Alex Rivera):
+  08:00 — Morning Walk [Exercise] — 30 min [priority: high]
+  08:30 — Feeding [Nutrition] — 10 min [priority: medium]
+Total time used: 40 min
+
+No tasks skipped.
+
+Schedule for Mochi on 2026-06-28 (Owner: Alex Rivera):
+  08:00 — Feeding [Nutrition] — 10 min [priority: medium]
+  08:10 — Grooming [Hygiene] — 20 min [priority: low]
+Total time used: 30 min
+
+No tasks skipped.
+=== Sorted by Time ===
+Feeding: 08:00
+Morning Walk: 14:00
+
+=== filter_tasks: incomplete tasks on Luna's schedule ===
+  Feeding (completed=False)
+
+=== filter_tasks: completed tasks on Luna's schedule ===
+  Morning Walk (completed=True)
+
+=== filter_tasks: tasks for pet 'Luna' ===
+  Morning Walk
+  Feeding
+
+=== filter_tasks: tasks for pet 'Mochi' (should be empty on Luna's schedule) ===
+  []
+
+=== Recurring Task: mark_complete() on Feeding ===
+  Feeding | schedule_date: 2026-06-28 (completed=True)
+  Feeding | schedule_date: 2026-06-29 (next occurrence)
+
+=== Conflict Detection ===
+  Conflict: 'Medication' and 'Dental Cleaning' both scheduled at 09:00
+```
 
 **Screenshot or video** _(optional)_: <!-- Insert a screenshot or link to a demo video here -->
