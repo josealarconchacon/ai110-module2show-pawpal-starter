@@ -1,5 +1,7 @@
+import re
 import streamlit as st
-from pawpal_system import Owner, Pet, Task
+from datetime import date
+from pawpal_system import Owner, Pet, Task, Schedule
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
@@ -68,22 +70,49 @@ st.caption("Add a few tasks. In your final version, these should feed into your 
 if "tasks" not in st.session_state:
     st.session_state.tasks = []
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     task_title = st.text_input("Task title", value="Morning walk")
 with col2:
     duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
 with col3:
     priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
+with col4:
+    scheduled_time = st.text_input("Scheduled time", value="", placeholder="e.g. 08:00")
 
 if st.button("Add task"):
-    st.session_state.tasks.append(
-        {"title": task_title, "duration_minutes": int(duration), "priority": priority}
-    )
+    if not task_title or not task_title.strip():
+        st.error("Task title cannot be empty.")
+    elif not scheduled_time:
+        st.error("Scheduled time cannot be empty. Please enter a time in HH:MM format.")
+    elif not re.fullmatch(r"\d{2}:\d{2}", scheduled_time):
+        st.error("Scheduled time must be in HH:MM format, e.g. 08:00")
+    else:
+        st.session_state.tasks.append(
+            Task(
+                name=task_title,
+                duration_minutes=int(duration),
+                priority=priority,
+                scheduled_time=scheduled_time,
+                category="General",
+                frequency="daily",
+                preferred_time_of_day="morning",
+            )
+        )
 
 if st.session_state.tasks:
     st.write("Current tasks:")
-    st.table(st.session_state.tasks)
+    st.table(
+        [
+            {
+                "name": task.name,
+                "scheduled_time": task.scheduled_time,
+                "duration_minutes": task.duration_minutes,
+                "priority": task.priority,
+            }
+            for task in st.session_state.tasks
+        ]
+    )
 else:
     st.info("No tasks yet. Add one above.")
 
@@ -93,15 +122,41 @@ st.subheader("Build Schedule")
 st.caption("This button should call your scheduling logic once you implement it.")
 
 if st.button("Generate schedule"):
-    st.warning(
-        "Not implemented yet. Next step: create your scheduling logic (classes/functions) and call it here."
-    )
-    st.markdown(
-        """
-Suggested approach:
-1. Design your UML (draft).
-2. Create class stubs (no logic).
-3. Implement scheduling behavior.
-4. Connect your scheduler here and display results.
-"""
-    )
+    if not (st.session_state.get("owner") and st.session_state.get("pet") and st.session_state.tasks):
+        st.warning("Add an owner, a pet, and at least one task before generating a schedule.")
+    else:
+        schedule = Schedule(
+            schedule_date=date.today(),
+            owner=st.session_state["owner"],
+            pet=st.session_state["pet"],
+        )
+        schedule.generate(
+            tasks=st.session_state.tasks,
+            available_minutes=st.session_state["owner"].available_minutes_per_day,
+        )
+        st.session_state["schedule"] = schedule
+        st.success(schedule.get_summary())
+        if schedule.skipped_tasks:
+            st.warning(schedule.get_skipped_summary())
+
+        st.subheader("📅 Sorted by Time")
+        sorted_tasks = schedule.sort_by_time()
+        st.table([{"name": task.name, "scheduled_time": task.scheduled_time} for _, task in sorted_tasks])
+
+        st.subheader("⚠️ Conflict Warnings")
+        warnings = schedule.detect_conflicts()
+        if warnings:
+            for warning in warnings:
+                st.error(warning)
+        else:
+            st.success("No scheduling conflicts detected.")
+
+        st.subheader("🔍 Filter by Status")
+        status_filter = st.radio("Filter by status", ["All", "Completed", "Incomplete"], index=0)
+        if status_filter == "All":
+            filtered = schedule.filter_tasks(completed=None)
+        elif status_filter == "Completed":
+            filtered = schedule.filter_tasks(completed=True)
+        else:
+            filtered = schedule.filter_tasks(completed=False)
+        st.table([{"name": t.name, "scheduled_time": t.scheduled_time} for t in filtered])
