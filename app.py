@@ -46,31 +46,40 @@ owner_name = st.text_input("Owner name", value="Jordan")
 available_minutes_per_day = st.number_input(
     "Available minutes per day", min_value=15, max_value=600, value=90
 )
-st.session_state["owner"] = Owner(
-    name=owner_name,
-    available_minutes_per_day=available_minutes_per_day,
-    preferences={},
-)
+owner_preferred_time = st.selectbox("Preferred time of day", ["morning", "afternoon", "evening"], index=0, key="owner_preferred_time")
+if "owner" not in st.session_state:
+    st.session_state["owner"] = Owner(
+        name=owner_name,
+        available_minutes_per_day=available_minutes_per_day,
+        preferences={"preferred_time_of_day": owner_preferred_time},
+    )
+else:
+    st.session_state["owner"].name = owner_name
+    st.session_state["owner"].set_availability(available_minutes_per_day)
+    st.session_state["owner"].preferences = {"preferred_time_of_day": owner_preferred_time}
 pet_name = st.text_input("Pet name", value="Mochi")
 species = st.selectbox("Species", ["dog", "cat", "other"])
+special_needs_input = st.text_area("Special needs (one per line, optional)", value="")
 
 if st.button("Add Pet"):
-    st.session_state["pet"] = Pet(
+    special_needs = [line.strip() for line in special_needs_input.splitlines() if line.strip()]
+    pet = Pet(
         name=pet_name,
         species=species,
         breed="Unknown",
         age=0,
-        special_needs=[],
+        special_needs=special_needs,
     )
-    st.success(f"Pet saved: {pet_name} ({species})")
+    st.session_state["pet"] = pet
+    if pet.has_special_needs():
+        st.warning(f"⚠️ {pet.name} has special care needs: " + ", ".join(pet.special_needs))
+    else:
+        st.success(f"Pet saved: {pet_name} ({species})")
 
 st.markdown("### Tasks")
 st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
 
-if "tasks" not in st.session_state:
-    st.session_state.tasks = []
-
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     task_title = st.text_input("Task title", value="Morning walk")
 with col2:
@@ -79,6 +88,8 @@ with col3:
     priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
 with col4:
     scheduled_time = st.text_input("Scheduled time", value="", placeholder="e.g. 08:00")
+with col5:
+    task_preferred_time = st.selectbox("Preferred time of day", ["morning", "afternoon", "evening"], index=0, key="task_preferred_time")
 
 if st.button("Add task"):
     if not task_title or not task_title.strip():
@@ -88,7 +99,7 @@ if st.button("Add task"):
     elif not re.fullmatch(r"\d{2}:\d{2}", scheduled_time):
         st.error("Scheduled time must be in HH:MM format, e.g. 08:00")
     else:
-        st.session_state.tasks.append(
+        st.session_state["owner"].add_task(
             Task(
                 name=task_title,
                 duration_minutes=int(duration),
@@ -96,23 +107,33 @@ if st.button("Add task"):
                 scheduled_time=scheduled_time,
                 category="General",
                 frequency="daily",
-                preferred_time_of_day="morning",
+                preferred_time_of_day=task_preferred_time,
             )
         )
 
-if st.session_state.tasks:
+if st.session_state["owner"].get_tasks():
     st.write("Current tasks:")
-    st.table(
-        [
-            {
-                "name": task.name,
-                "scheduled_time": task.scheduled_time,
-                "duration_minutes": task.duration_minutes,
-                "priority": task.priority,
-            }
-            for task in st.session_state.tasks
-        ]
-    )
+    tasks_snapshot = list(st.session_state["owner"].get_tasks())
+    task_to_complete = None
+    for task in tasks_snapshot:
+        cols = st.columns([3, 2, 2, 2, 2, 2])
+        cols[0].write(task.name)
+        cols[1].write(task.scheduled_time)
+        cols[2].write(f"{task.duration_minutes} min")
+        cols[3].write(task.priority)
+        cols[4].write("✓ Done" if task.completed else "Pending")
+        if cols[5].button("Mark complete", key=f"complete_{id(task)}"):
+            task_to_complete = task
+    if task_to_complete is not None:
+        was_already_completed = task_to_complete.completed
+        next_task = task_to_complete.mark_complete()
+        if was_already_completed:
+            st.info(f"'{task_to_complete.name}' was already completed.")
+        elif next_task is not None:
+            st.session_state["owner"].add_task(next_task)
+            st.success(f"'{task_to_complete.name}' marked complete. Next occurrence scheduled for {next_task.schedule_date}.")
+        else:
+            st.success(f"'{task_to_complete.name}' marked complete.")
 else:
     st.info("No tasks yet. Add one above.")
 
@@ -122,7 +143,7 @@ st.subheader("Build Schedule")
 st.caption("This button should call your scheduling logic once you implement it.")
 
 if st.button("Generate schedule"):
-    if not (st.session_state.get("owner") and st.session_state.get("pet") and st.session_state.tasks):
+    if not (st.session_state.get("owner") and st.session_state.get("pet") and st.session_state["owner"].get_tasks()):
         st.warning("Add an owner, a pet, and at least one task before generating a schedule.")
     else:
         schedule = Schedule(
@@ -131,7 +152,7 @@ if st.button("Generate schedule"):
             pet=st.session_state["pet"],
         )
         schedule.generate(
-            tasks=st.session_state.tasks,
+            tasks=st.session_state["owner"].get_tasks(),
             available_minutes=st.session_state["owner"].available_minutes_per_day,
         )
         st.session_state["schedule"] = schedule

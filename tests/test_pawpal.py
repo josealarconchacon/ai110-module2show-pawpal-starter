@@ -320,3 +320,36 @@ def test_empty_schedule_methods_return_safely(sample_owner, sample_pet):
     assert empty_schedule.filter_tasks() == []
     assert empty_schedule.detect_conflicts() == []
 
+
+def test_generate_breaks_priority_tie_by_preferred_time(sample_pet):
+    """When two tasks share the same priority, the one matching the owner's preferred_time_of_day comes first."""
+    # 1. Arrange: owner prefers morning; two high-priority tasks differing only in preferred_time_of_day
+    morning_owner = Owner(
+        name="Sam",
+        available_minutes_per_day=120,
+        preferences={"preferred_time_of_day": "morning"},
+    )
+    morning_task = Task(
+        name="Morning Brush",
+        category="Hygiene",
+        duration_minutes=15,
+        priority="high",
+        frequency="daily",
+        preferred_time_of_day="morning",
+    )
+    evening_task = Task(
+        name="Evening Brush",
+        category="Hygiene",
+        duration_minutes=15,
+        priority="high",
+        frequency="daily",
+        preferred_time_of_day="evening",
+    )
+    schedule = Schedule(schedule_date=date.today(), owner=morning_owner, pet=sample_pet)
+    # 2. Act: pass tasks in reverse desired order to confirm sorting is applied
+    schedule.generate(tasks=[evening_task, morning_task], available_minutes=120)
+    # 3. Assert: morning task appears first in slots
+    first_task = schedule.slots[0][1]
+    assert first_task.preferred_time_of_day == "morning"
+    assert first_task.name == "Morning Brush"
+

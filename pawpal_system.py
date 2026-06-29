@@ -145,9 +145,21 @@ class Schedule:
         self.skipped_tasks: List[Task] = []
 
     def generate(self, tasks: List[Task], available_minutes: int):
-        """Populates slots by fitting tasks into the available time budget in priority order"""
+        """Populates slots by fitting tasks into the available time budget in priority order.
+
+        Tasks are sorted by (priority_value, time_of_day_match), so when two tasks share the
+        same priority, the one matching the owner's preferred_time_of_day comes first (key 0)
+        and the non-matching one comes second (key 1). If the owner has no preferred_time_of_day
+        set, the secondary key has no effect since no task will match None.
+        """
         due_tasks = [t for t in tasks if t.is_due_today()]
-        sorted_tasks = sorted(due_tasks, key=lambda t: t.get_priority_value())
+        sorted_tasks = sorted(
+            due_tasks,
+            key=lambda t: (
+                t.get_priority_value(),
+                0 if t.preferred_time_of_day == self.owner.preferences.get("preferred_time_of_day") else 1,
+            ),
+        )
 
         current_minute = 0
         time_remaining = available_minutes
