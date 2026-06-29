@@ -28,9 +28,7 @@ classDiagram
         +String frequency
         +String preferred_time_of_day
         +bool completed
-        +String scheduled_time
-        +Date schedule_date
-        +mark_complete() Task
+        +mark_complete()
         +is_due_today() bool
         +get_priority_value() int  %% maps low/medium/high → 3/2/1
         +get_display_label() String
@@ -58,7 +56,6 @@ classDiagram
     Schedule --> Owner : belongs to
     Schedule --> Pet : scheduled for
     Schedule --> Task : includes
-    Task     --> Task : generates next occurrence (mark_complete)
 
 %% ─────────────────────────────────────────────────────────────────────────────
 %% UML Class Diagram
@@ -108,20 +105,17 @@ classDiagram
 %%                ▼                    ▼                    │ +String frequency                 │
 %%          ┌─────────────────────────────┐                 │ +String preferred_time_of_day     │
 %%                                                          │ +bool completed                   │
-%%          │             Pet             │                 │ +String scheduled_time            │
-%%                                                          │ +Date schedule_date               │
+%%          │             Pet             │                 │                                   │
 %%          ├─────────────────────────────┤                 ├───────────────────────────────────┤
-%%          │ +String name                │                 │ +mark_complete() : Task           │
+%%          │ +String name                │                 │ +mark_complete() :                │
 %%          │ +String species             │                 │ +is_due_today() : bool            │
 %%          │ +String breed               │                 │ +get_priority_value() : int       │
 %%          │ +int age                    │                 │ +get_display_label() : String     │
 %%          │ +List special_needs         │                 └──────────────┬────────────────────┘
-%%          ├─────────────────────────────┤                                │
-%%          │ +get_care_profile() : dict  │      generates next            │
-%%          │ +has_special_needs() : bool │      occurrence (mark_complete)│
-%%          └─────────────────────────────┘                ▼
-%%                                                ┌─────────────────────┐
-%%                                                │        Task         │
-%%                                                │  (next occurrence)  │
-%%                                                └─────────────────────┘
+%%          ├─────────────────────────────┤                                
+%%          │ +get_care_profile() : dict  │      
+%%          │ +has_special_needs() : bool │      
+%%          └─────────────────────────────┘                
+%%                                                
+%%                                               
 %%
