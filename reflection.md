@@ -26,7 +26,7 @@ Yes, one thing caught me when reviewing the skeleton more carefully. The `Owner`
 
 The brief calls this component `Scheduler,` but I went with Schedule instead. The class holds a single day's plan for one owner and pet (`slots, totals used, skipped tasks`), so it felt more like a thing than a doer, and Schedule matched that better.
 
-I also missed completion tracking in my original Task design. The project brief requires that tasks can be marked done, and Phase 2 Step 3 specifically tests `mark_complete()`, but I hadn't included either the `completed` field or that method in my initial class. Once I noticed the gap I added `completed: bool = False` as a default field and a `mark_complete()` method that flips it to `True`. It's a small addition but without it the scheduler has no way to record that a task actually happened, only that it was planned.
+I also missed completion tracking in my original Task design. The project brief requires that tasks can be marked done, and Phase 2 Step 3 specifically tests `mark_complete()`, but I hadn't included either the `completed` field or that method in my initial class. Once I noticed the gap I added `completed: bool = False` as a default field and a `mark_complete()` method that sets it to `True` and, for `"daily"` or `"weekly"` tasks, returns a new `Task` instance with the same fields but `schedule_date` advanced by one day or one week respectively — giving the caller a ready-made next occurrence. For any other frequency, or if the task was already completed, it returns `None`. Without the flag the scheduler has no way to record that a task actually happened; without the return value there is no automatic way to propagate recurring tasks forward.
 
 ---
 
