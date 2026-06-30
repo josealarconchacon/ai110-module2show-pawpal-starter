@@ -353,3 +353,32 @@ def test_generate_breaks_priority_tie_by_preferred_time(sample_pet):
     assert first_task.preferred_time_of_day == "morning"
     assert first_task.name == "Morning Brush"
 
+
+def test_filter_tasks_by_pet_name_uses_task_field(sample_schedule):
+    """filter_tasks(pet_name=...) must match each task's own pet_name, not the schedule's pet."""
+    # 1. Arrange: two daily tasks belonging to different pets
+    luna_task = Task(
+        name="Luna Walk",
+        category="Exercise",
+        duration_minutes=15,
+        priority="high",
+        frequency="daily",
+        preferred_time_of_day="morning",
+        pet_name="Luna",
+    )
+    mochi_task = Task(
+        name="Mochi Walk",
+        category="Exercise",
+        duration_minutes=15,
+        priority="high",
+        frequency="daily",
+        preferred_time_of_day="morning",
+        pet_name="Mochi",
+    )
+    sample_schedule.generate(tasks=[luna_task, mochi_task], available_minutes=60)
+    # 2. Act: filter for Luna's tasks only
+    result = sample_schedule.filter_tasks(pet_name="Luna")
+    # 3. Assert: only the Luna task is returned
+    assert result == [luna_task]
+    assert mochi_task not in result
+

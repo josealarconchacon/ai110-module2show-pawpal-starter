@@ -1,6 +1,6 @@
 import re
 import streamlit as st
-from datetime import date
+from datetime import date, timedelta
 from pawpal_system import Owner, Pet, Task, Schedule
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
@@ -59,22 +59,35 @@ else:
     st.session_state["owner"].preferences = {"preferred_time_of_day": owner_preferred_time}
 pet_name = st.text_input("Pet name", value="Mochi")
 species = st.selectbox("Species", ["dog", "cat", "other"])
+breed = st.text_input("Breed", value="Unknown")
+age = st.number_input("Age", min_value=0, max_value=30, value=0)
 special_needs_input = st.text_area("Special needs (one per line, optional)", value="")
+
+if "pets" not in st.session_state:
+    st.session_state["pets"] = []
 
 if st.button("Add Pet"):
     special_needs = [line.strip() for line in special_needs_input.splitlines() if line.strip()]
     pet = Pet(
         name=pet_name,
         species=species,
-        breed="Unknown",
-        age=0,
+        breed=breed,
+        age=age,
         special_needs=special_needs,
     )
-    st.session_state["pet"] = pet
+    st.session_state["pets"].append(pet)
     if pet.has_special_needs():
         st.warning(f"⚠️ {pet.name} has special care needs: " + ", ".join(pet.special_needs))
     else:
         st.success(f"Pet saved: {pet_name} ({species})")
+    st.write("**Pet Profile:**")
+    st.json(pet.get_care_profile())
+
+if st.session_state["pets"]:
+    active_pet_name = st.selectbox("Active pet", options=[p.name for p in st.session_state["pets"]])
+else:
+    st.info("Add a pet first.")
+    active_pet_name = None
 
 st.markdown("### Tasks")
 st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
@@ -92,7 +105,9 @@ with col5:
     task_preferred_time = st.selectbox("Preferred time of day", ["morning", "afternoon", "evening"], index=0, key="task_preferred_time")
 
 if st.button("Add task"):
-    if not task_title or not task_title.strip():
+    if active_pet_name is None:
+        st.error("Add a pet and select it as the active pet before adding tasks.")
+    elif not task_title or not task_title.strip():
         st.error("Task title cannot be empty.")
     elif not scheduled_time:
         st.error("Scheduled time cannot be empty. Please enter a time in HH:MM format.")
@@ -108,6 +123,7 @@ if st.button("Add task"):
                 category="General",
                 frequency="daily",
                 preferred_time_of_day=task_preferred_time,
+                pet_name=active_pet_name,
             )
         )
 
@@ -115,15 +131,26 @@ if st.session_state["owner"].get_tasks():
     st.write("Current tasks:")
     tasks_snapshot = list(st.session_state["owner"].get_tasks())
     task_to_complete = None
+    task_to_remove = None
     for task in tasks_snapshot:
-        cols = st.columns([3, 2, 2, 2, 2, 2])
+        cols = st.columns([3, 2, 2, 2, 2, 2, 2, 2])
         cols[0].write(task.name)
         cols[1].write(task.scheduled_time)
         cols[2].write(f"{task.duration_minutes} min")
         cols[3].write(task.priority)
         cols[4].write("✓ Done" if task.completed else "Pending")
-        if cols[5].button("Mark complete", key=f"complete_{id(task)}"):
+        today = date.today()
+        if task.schedule_date == today:
+            date_label = "Today"
+        elif task.schedule_date == today + timedelta(days=1):
+            date_label = "Tomorrow"
+        else:
+            date_label = task.schedule_date.strftime("%b %d")
+        cols[5].write(date_label)
+        if cols[6].button("Mark complete", key=f"complete_{id(task)}"):
             task_to_complete = task
+        if cols[7].button("Remove", key=f"remove_{id(task)}"):
+            task_to_remove = task
     if task_to_complete is not None:
         was_already_completed = task_to_complete.completed
         next_task = task_to_complete.mark_complete()
@@ -134,6 +161,11 @@ if st.session_state["owner"].get_tasks():
             st.success(f"'{task_to_complete.name}' marked complete. Next occurrence scheduled for {next_task.schedule_date}.")
         else:
             st.success(f"'{task_to_complete.name}' marked complete.")
+        st.rerun()
+    if task_to_remove is not None:
+        st.session_state["owner"].remove_task(task_to_remove)
+        st.success(f"'{task_to_remove.name}' removed.")
+        st.rerun()
 else:
     st.info("No tasks yet. Add one above.")
 
@@ -143,16 +175,18 @@ st.subheader("Build Schedule")
 st.caption("This button should call your scheduling logic once you implement it.")
 
 if st.button("Generate schedule"):
-    if not (st.session_state.get("owner") and st.session_state.get("pet") and st.session_state["owner"].get_tasks()):
+    if not (st.session_state["pets"] and active_pet_name and st.session_state["owner"].get_tasks()):
         st.warning("Add an owner, a pet, and at least one task before generating a schedule.")
     else:
+        active_pet = next(p for p in st.session_state["pets"] if p.name == active_pet_name)
         schedule = Schedule(
             schedule_date=date.today(),
             owner=st.session_state["owner"],
-            pet=st.session_state["pet"],
+            pet=active_pet,
         )
+        pet_tasks = [t for t in st.session_state["owner"].get_tasks() if t.pet_name == active_pet_name]
         schedule.generate(
-            tasks=st.session_state["owner"].get_tasks(),
+            tasks=pet_tasks,
             available_minutes=st.session_state["owner"].available_minutes_per_day,
         )
         st.session_state["schedule"] = schedule

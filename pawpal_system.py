@@ -40,6 +40,7 @@ class Task:
     completed: bool = False
     scheduled_time: str = ""
     schedule_date: date = field(default_factory=date.today)
+    pet_name: str = ""
 
     def mark_complete(self) -> "Task | None":
         """Mark this task complete and return the next occurrence if applicable.
@@ -70,6 +71,7 @@ class Task:
                 preferred_time_of_day=self.preferred_time_of_day,
                 scheduled_time=self.scheduled_time,
                 schedule_date=self.schedule_date + timedelta(days=1),
+                pet_name=self.pet_name,
             )
         if self.frequency == "weekly":
             return Task(
@@ -81,6 +83,7 @@ class Task:
                 preferred_time_of_day=self.preferred_time_of_day,
                 scheduled_time=self.scheduled_time,
                 schedule_date=self.schedule_date + timedelta(weeks=1),
+                pet_name=self.pet_name,
             )
         return None
 
@@ -186,11 +189,11 @@ class Schedule:
         return sorted(self.slots, key=lambda t: t[1].scheduled_time if t[1].scheduled_time else "99:99")
 
     def filter_tasks(self, completed: bool = None, pet_name: str = None) -> list:
-        """Return Task objects from slots matching the given completion status and/or pet name."""
+        """Return Task objects from slots matching the given completion status and/or each task's own pet_name."""
         return [
             task for _, task in self.slots
             if (completed is None or task.completed == completed)
-            and (pet_name is None or self.pet.name == pet_name)
+            and (pet_name is None or task.pet_name == pet_name)
         ]
 
     def get_summary(self) -> str:
